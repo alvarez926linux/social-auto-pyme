@@ -21,12 +21,12 @@ LinkedIn es el más sencillo. Si ya configuraste la **Redirect URI** de Vercel e
 ## 2. Configuración de Instagram/Facebook (Requiere Invitación)
 Debido a que Meta es muy estricto, debes agregar al cliente como **Tester** manualmente:
 
-### Paso A: Tú (El Desarrollador) haces esto:
+### Paso A: Tú (El Desarrollador) hace esto:
 1. Entra a [developers.facebook.com](https://developers.facebook.com/apps).
 2. Selecciona tu App.
-3. En el menú lateral ve a **App Roles** (Roles de la app) -> **Roles**.
-4. En la sección **Testers**, haz clic en **Add Testers**.
-5. Escribe el **Nombre de Usuario** de Facebook de tu cliente o su **ID de Facebook**.
+3. En el menú lateral busca **App Roles** (Roles de la app) y haz clic en **Roles** (¡No vayas a "Test Users"!, ve a **Roles**).
+4. Busca la sección que dice **Testers** (Evaluadores) y haz clic en **Add Testers**.
+5. Escribe el **Nombre de Usuario** de Facebook de tu cliente (el que sale en su URL de perfil) o su **ID de Facebook**.
 6. Haz clic en **Submit**.
 
 ### Paso B: El Cliente hace esto:
