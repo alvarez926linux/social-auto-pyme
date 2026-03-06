@@ -66,16 +66,14 @@ export const authOptions: NextAuthOptions = {
                             where: { email },
                             select: { id: true }
                         });
-                        dbUserId = existingUser?.id;
+                        if (existingUser?.id) dbUserId = existingUser.id;
                     }
 
                     // 3. Si sigue sin haber userId, NextAuth creará uno nuevo (flujo normal adaptador)
                     // pero si es Facebook/TikTok y queremos vincularlo a un usuario existente sin email:
                     if (!dbUserId) {
-                        // Fallback: Si no hay email, buscamos cualquier usuario (para demos de un solo usuario)
-                        // o dejamos que el adaptador cree uno nuevo.
                         const firstUser = await prisma.user.findFirst({ select: { id: true } });
-                        dbUserId = firstUser?.id;
+                        if (firstUser?.id) dbUserId = firstUser.id;
                     }
 
                     if (dbUserId && account.providerAccountId) {
