@@ -39,9 +39,8 @@ export const authOptions: NextAuthOptions = {
     ],
     callbacks: {
         async signIn({ account, user, profile }) {
-            const logPath = 'c:\\RedesSociales\\social-auto-pyme\\DEBUG_AUTH.txt';
             const log = (msg: string) => {
-                try { require('fs').appendFileSync(logPath, `[${new Date().toISOString()}] ${msg}\n`); } catch (e) { }
+                console.log(`[AUTH] ${msg}`);
             };
 
             log(`🔐 SIGNIN: Provider=${account?.provider}, UserID=${user?.id}, Email=${user?.email || (profile as any)?.email}`);
@@ -149,28 +148,14 @@ export const authOptions: NextAuthOptions = {
     },
     logger: {
         error(code, metadata) {
-            try {
-                require('fs').appendFileSync(
-                    'c:\\RedesSociales\\social-auto-pyme\\DEBUG_AUTH.txt',
-                    `\n[${new Date().toISOString()}] ❌ ERROR: ${code} - ${JSON.stringify(metadata)}\n`
-                );
-            } catch (e) { }
+            console.error(`[AUTH ERROR] ${code}`, metadata);
         },
         warn(code) {
-            try {
-                require('fs').appendFileSync(
-                    'c:\\RedesSociales\\social-auto-pyme\\DEBUG_AUTH.txt',
-                    `[${new Date().toISOString()}] ⚠️ WARN: ${code}\n`
-                );
-            } catch (e) { }
+            console.warn(`[AUTH WARN] ${code}`);
         },
         debug(code, metadata) {
-            try {
-                require('fs').appendFileSync(
-                    'c:\\RedesSociales\\social-auto-pyme\\DEBUG_AUTH.txt',
-                    `[${new Date().toISOString()}] 🔍 DEBUG: ${code} - ${JSON.stringify(metadata)}\n`
-                );
-            } catch (e) { }
+            console.log(`[AUTH DEBUG] ${code}`, metadata);
         },
     },
+    // v1.1.0 - Refined UI Build
 };
