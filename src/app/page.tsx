@@ -59,7 +59,7 @@ export default function Home() {
 
   const handleGenerate = async () => {
     if (!session) {
-      alert("Por favor, inicia sesión con LinkedIn primero.");
+      alert("Por favor, inicia sesión con una red social para continuar.");
       return;
     }
     if (!title.trim() || !description.trim()) {
@@ -126,6 +126,25 @@ export default function Home() {
     }
   };
 
+  const handleDisconnect = async (provider: string) => {
+    if (!confirm(`¿Estás seguro de que quieres desconectar ${provider}?`)) return;
+    try {
+      const res = await fetch("/api/auth/disconnect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider }),
+      });
+      if (res.ok) {
+        updateSession();
+        setIgMessage(`✅ ${provider} desconectado correctamente.`);
+      } else {
+        throw new Error("Error al desvincular.");
+      }
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#f8fafc] text-slate-900">
       {/* Premium Header */}
@@ -141,23 +160,16 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-4">
-            {session ? (
+            {session && (
               <div className="flex items-center gap-3">
                 <img src={session.user?.image || ""} alt="" className="w-8 h-8 rounded-full border border-slate-200" />
                 <button
                   onClick={() => signOut()}
-                  className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                 >
-                  Salir
+                  Cerrar Sesión Global
                 </button>
               </div>
-            ) : (
-              <button
-                onClick={() => signIn("linkedin")}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm shadow-blue-200"
-              >
-                Conectar LinkedIn
-              </button>
             )}
           </div>
         </div>
@@ -187,10 +199,17 @@ export default function Home() {
 
           {/* Social Platforms Grid */}
           <div className="pt-8 flex flex-wrap justify-center gap-6">
+            {/* LinkedIn */}
             <div className="group relative flex flex-col items-center gap-3">
               <div className="relative">
                 <button
-                  onClick={() => !session ? signIn("linkedin") : togglePlatform("linkedin")}
+                  onClick={() => {
+                    if (!isLinkedInConnected) {
+                      signIn("linkedin");
+                    } else {
+                      togglePlatform("linkedin");
+                    }
+                  }}
                   className={`p-4 rounded-2xl transition-all duration-300 flex items-center justify-center ${selectedPlatforms.includes("linkedin") ? 'bg-blue-50 text-blue-600 shadow-inner ring-2 ring-blue-500' : 'bg-white text-slate-400 hover:text-blue-600 hover:shadow-xl hover:-translate-y-1 border border-slate-100 shadow-sm'}`}
                 >
                   <Linkedin className="w-8 h-8" />
@@ -200,13 +219,21 @@ export default function Home() {
                 )}
               </div>
               <span className={`text-xs font-bold uppercase tracking-tighter ${selectedPlatforms.includes("linkedin") ? "text-blue-600" : "text-slate-400"}`}>LinkedIn</span>
+              {isLinkedInConnected && (
+                <button
+                  onClick={() => handleDisconnect("linkedin")}
+                  className="text-[10px] text-slate-400 hover:text-red-600 underline font-bold transition-colors"
+                >
+                  DESCONECTAR
+                </button>
+              )}
             </div>
 
+            {/* Instagram */}
             <div className="group relative flex flex-col items-center gap-3">
               <div className="relative">
                 <button
                   onClick={() => {
-                    if (!session) return;
                     if (!isFacebookConnected) {
                       window.location.href = "/api/auth/link-instagram";
                     } else {
@@ -222,23 +249,21 @@ export default function Home() {
                 )}
               </div>
               <span className={`text-xs font-bold uppercase tracking-tighter ${selectedPlatforms.includes("instagram") ? "text-pink-600" : "text-slate-400"}`}>Instagram</span>
-              {/* Botón de reconexión: siempre visible cuando hay sesión para poder refrescar el token */}
-              {session && (
+              {isFacebookConnected && (
                 <button
-                  onClick={() => { window.location.href = "/api/auth/link-instagram"; }}
-                  className="text-xs text-slate-400 hover:text-pink-500 underline transition-colors"
-                  title="Reconectar Instagram para refrescar permisos"
+                  onClick={() => handleDisconnect("facebook")}
+                  className="text-[10px] text-slate-400 hover:text-red-600 underline font-bold transition-colors"
                 >
-                  {isFacebookConnected ? "Reconectar" : "Conectar"}
+                  DESCONECTAR
                 </button>
               )}
             </div>
 
+            {/* Facebook */}
             <div className="group relative flex flex-col items-center gap-3">
               <div className="relative">
                 <button
                   onClick={() => {
-                    if (!session) return;
                     if (!isFBPageConnected) {
                       window.location.href = "/api/auth/link-instagram";
                     } else {
@@ -258,22 +283,21 @@ export default function Home() {
               </div>
               <span className={`text-xs font-bold uppercase tracking-tighter ${selectedPlatforms.includes("facebook") ? "text-blue-700" : "text-slate-400"
                 }`}>Facebook</span>
-              {session && (
+              {isFBPageConnected && (
                 <button
-                  onClick={() => { window.location.href = "/api/auth/link-instagram"; }}
-                  className="text-xs text-slate-400 hover:text-blue-600 underline transition-colors"
-                  title="Reconectar Facebook para refrescar permisos"
+                  onClick={() => handleDisconnect("facebook")}
+                  className="text-[10px] text-slate-400 hover:text-red-600 underline font-bold transition-colors"
                 >
-                  {isFBPageConnected ? "Reconectar" : "Conectar"}
+                  DESCONECTAR
                 </button>
               )}
             </div>
 
+            {/* TikTok */}
             <div className="group relative flex flex-col items-center gap-3">
               <div className="relative">
                 <button
                   onClick={() => {
-                    if (!session) return;
                     if (!isTikTokConnected) {
                       window.location.href = "/api/auth/link-tiktok";
                     } else {
@@ -281,8 +305,8 @@ export default function Home() {
                     }
                   }}
                   className={`p-4 rounded-2xl transition-all duration-300 flex items-center justify-center ${selectedPlatforms.includes("tiktok")
-                      ? 'bg-slate-900 text-white shadow-inner ring-2 ring-slate-900'
-                      : 'bg-white text-slate-400 hover:text-slate-900 hover:shadow-xl border border-slate-100 shadow-sm'
+                    ? 'bg-slate-900 text-white shadow-inner ring-2 ring-slate-900'
+                    : 'bg-white text-slate-400 hover:text-slate-900 hover:shadow-xl border border-slate-100 shadow-sm'
                     }`}
                 >
                   <Music2 className="w-8 h-8" />
@@ -293,12 +317,12 @@ export default function Home() {
               </div>
               <span className={`text-xs font-bold uppercase tracking-tighter ${selectedPlatforms.includes("tiktok") ? "text-slate-900" : "text-slate-400"
                 }`}>TikTok</span>
-              {session && (
+              {isTikTokConnected && (
                 <button
-                  onClick={() => { window.location.href = "/api/auth/link-tiktok"; }}
-                  className="text-xs text-slate-400 hover:text-slate-900 underline transition-colors"
+                  onClick={() => handleDisconnect("tiktok")}
+                  className="text-[10px] text-slate-400 hover:text-red-600 underline font-bold transition-colors"
                 >
-                  {isTikTokConnected ? "Reconectar" : "Conectar"}
+                  DESCONECTAR
                 </button>
               )}
             </div>

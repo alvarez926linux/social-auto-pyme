@@ -27,11 +27,6 @@ function generatePKCE() {
 
 export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-        return NextResponse.redirect(new URL("/", req.url));
-    }
-
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
     const error = searchParams.get("error");
@@ -101,7 +96,33 @@ export async function GET(req: NextRequest) {
         }
 
         const { access_token, refresh_token, expires_in, open_id } = tokenData;
-        const userId = session.user.id;
+
+        let userId = session?.user?.id;
+
+        if (!userId) {
+            // Si no hay sesión, buscamos si ya existe el usuario con esta cuenta de TikTok
+            const existingAccount = await prisma.account.findUnique({
+                where: {
+                    provider_providerAccountId: {
+                        provider: "tiktok",
+                        providerAccountId: open_id,
+                    }
+                },
+                select: { userId: true }
+            });
+
+            if (existingAccount) {
+                userId = existingAccount.userId;
+            } else {
+                // Crear un nuevo usuario para este login de TikTok
+                const newUser = await prisma.user.create({
+                    data: {
+                        name: "TikTok User",
+                    }
+                });
+                userId = newUser.id;
+            }
+        }
 
         // 2. Guardar/actualizar la cuenta de TikTok en DB
         await prisma.account.upsert({

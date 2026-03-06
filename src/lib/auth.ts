@@ -46,103 +46,98 @@ export const authOptions: NextAuthOptions = {
 
             log(`🔐 SIGNIN: Provider=${account?.provider}, UserID=${user?.id}, Email=${user?.email || (profile as any)?.email}`);
 
-            // Para Facebook: guardar/actualizar manualmente la cuenta en DB.
-            // Usamos el providerAccountId de LinkedIn (ya en DB) porque sin scope
-            // 'email', Facebook no devuelve el correo del usuario.
-            if (account?.provider === "facebook" && account.access_token) {
-                try {
-                    // Buscar el usuario que tenga una cuenta de LinkedIn en DB
-                    // (el usuario principal de la aplicación)
-                    const linkedinAccount = await prisma.account.findFirst({
-                        where: { provider: "linkedin" },
-                        select: { userId: true }
-                    });
+            if (!account || !account.access_token) return true;
 
-                    if (!linkedinAccount) {
-                        log("\u274c No se encontró ningún usuario con LinkedIn en DB. Debes iniciar sesión con LinkedIn primero.");
-                        return false;
+            // Intentar encontrar un usuario por email si NextAuth no lo vinculó automáticamente
+            // o si el provider no devuelve email (como Facebook a veces)
+            const email = user?.email || (profile as any)?.email;
+
+            if (account.provider === "facebook" || account.provider === "tiktok" || account.provider === "linkedin") {
+                try {
+                    // 1. Si el usuario ya está logueado en la sesión (vinculación en caliente)
+                    // NextAuth maneja esto internamente con el adaptador si la sesión existe,
+                    // pero forzamos la lógica de persistencia manual para mayor control.
+
+                    let dbUserId = user?.id;
+
+                    // 2. Si es un login nuevo (no hay sesión), buscamos por email
+                    if (!dbUserId && email) {
+                        const existingUser = await prisma.user.findUnique({
+                            where: { email },
+                            select: { id: true }
+                        });
+                        dbUserId = existingUser?.id;
                     }
 
-                    const dbUserId = linkedinAccount.userId;
+                    // 3. Si sigue sin haber userId, NextAuth creará uno nuevo (flujo normal adaptador)
+                    // pero si es Facebook/TikTok y queremos vincularlo a un usuario existente sin email:
+                    if (!dbUserId) {
+                        // Fallback: Si no hay email, buscamos cualquier usuario (para demos de un solo usuario)
+                        // o dejamos que el adaptador cree uno nuevo.
+                        const firstUser = await prisma.user.findFirst({ select: { id: true } });
+                        dbUserId = firstUser?.id;
+                    }
 
-                    // Upsert de la cuenta de Facebook vinculada al usuario de LinkedIn
-                    await prisma.account.upsert({
-                        where: {
-                            provider_providerAccountId: {
-                                provider: "facebook",
+                    if (dbUserId && account.providerAccountId) {
+                        log(`🔗 Vinculando ${account.provider} a userId=${dbUserId}`);
+                        await prisma.account.upsert({
+                            where: {
+                                provider_providerAccountId: {
+                                    provider: account.provider,
+                                    providerAccountId: account.providerAccountId,
+                                }
+                            },
+                            update: {
+                                access_token: account.access_token,
+                                refresh_token: account.refresh_token ?? null,
+                                expires_at: account.expires_at ?? null,
+                                scope: account.scope ?? null,
+                                token_type: account.token_type ?? null,
+                            },
+                            create: {
+                                userId: dbUserId,
+                                type: account.type,
+                                provider: account.provider,
                                 providerAccountId: account.providerAccountId,
+                                access_token: account.access_token,
+                                refresh_token: account.refresh_token ?? null,
+                                expires_at: account.expires_at ?? null,
+                                scope: account.scope ?? null,
+                                token_type: account.token_type ?? null,
                             }
-                        },
-                        update: {
-                            access_token: account.access_token,
-                            refresh_token: account.refresh_token ?? null,
-                            expires_at: account.expires_at ?? null,
-                            scope: account.scope ?? null,
-                            token_type: account.token_type ?? null,
-                        },
-                        create: {
-                            userId: dbUserId,
-                            type: account.type,
-                            provider: "facebook",
-                            providerAccountId: account.providerAccountId,
-                            access_token: account.access_token,
-                            refresh_token: account.refresh_token ?? null,
-                            expires_at: account.expires_at ?? null,
-                            scope: account.scope ?? null,
-                            token_type: account.token_type ?? null,
-                        }
-                    });
-
-                    log(`\u2705 Cuenta de Facebook guardada/actualizada en DB para userId=${dbUserId}`);
-                    console.log(`\u2705 Cuenta Facebook guardada en DB para userId=${dbUserId}`);
-
-                    // Retornar true para que NextAuth complete su flujo normal
-                    return true;
+                        });
+                        return true;
+                    }
                 } catch (err: any) {
-                    log(`\u274c Error al guardar cuenta FB: ${err.message}`);
-                    console.error("\u274c Error guardando cuenta de Facebook en DB:", err.message);
-                    return false;
+                    log(`❌ Error en signIn callback: ${err.message}`);
+                    return true; // Permitir login aunque falle el upsert manual (el adaptador lo intentará)
                 }
             }
 
             return true;
         },
         async jwt({ token, account, user }) {
-            try {
-                require('fs').appendFileSync(
-                    'c:\\RedesSociales\\social-auto-pyme\\DEBUG_AUTH.txt',
-                    `[${new Date().toISOString()}] 🎫 JWT: Provider=${account?.provider || 'none'}, UserID=${user?.id || 'none'}, TokenSub=${token.sub}\n`
-                );
-            } catch (e) { }
-
             if (account) {
                 token.accessToken = account.access_token;
                 token.refreshToken = account.refresh_token;
+                token.provider = account.provider;
             }
             if (user) {
                 token.dbUserId = user.id;
-            } else if (token.sub && !token.dbUserId) {
-                token.dbUserId = token.sub;
             }
             return token;
         },
         async session({ session, token }: any) {
-            try {
-                require('fs').appendFileSync(
-                    'c:\\RedesSociales\\social-auto-pyme\\DEBUG_AUTH.txt',
-                    `[${new Date().toISOString()}] 👤 SESSION: User=${session.user?.email}, DB_ID=${token.dbUserId}\n`
-                );
-            } catch (e) { }
-
             if (session.user) {
                 session.user.id = token.dbUserId as string;
+                // Cargar todas las cuentas vinculadas para mostrar en la UI
                 const accounts = await prisma.account.findMany({
                     where: { userId: token.dbUserId as string },
                     select: { provider: true }
                 });
-                (session as any).accounts = accounts;
+                session.accounts = accounts;
+                session.provider = token.provider;
             }
-            session.accessToken = token.accessToken;
             return session;
         },
     },
