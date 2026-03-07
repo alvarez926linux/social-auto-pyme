@@ -469,6 +469,9 @@ export default function Home() {
                 <ShieldCheck className="w-4 h-4" />
                 Política de Privacidad
               </Link>
+              <Link href="/terms" className="text-sm font-semibold text-slate-400 hover:text-indigo-600 transition-colors">
+                Términos de Servicio
+              </Link>
               <Link href="/data-deletion" className="text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors">
                 Eliminación de Datos
               </Link>

@@ -48,6 +48,8 @@ Para que Facebook apruebe el uso de Instagram Graph API, debes colocar estas URL
 
 - **URL de la política de privacidad:** 
   `https://social-auto-pyme-v1.vercel.app/privacy`
+- **URL de condiciones del servicio:** 
+  `https://social-auto-pyme-v1.vercel.app/terms`
 - **URL de eliminación de datos de usuario:** 
   `https://social-auto-pyme-v1.vercel.app/data-deletion`
 
