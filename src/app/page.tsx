@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import MediaUploader from "@/components/MediaUploader";
 import PostList from "@/components/PostList";
 import { GeneratedPost } from "@/services/ai.service";
-import { Linkedin, Facebook, Instagram, Music2, Sparkles, LayoutDashboard } from "lucide-react";
+import { Linkedin, Facebook, Instagram, Music2, Sparkles, LayoutDashboard, ShieldCheck } from "lucide-react";
 import { signIn, useSession, signOut } from "next-auth/react";
+import Link from "next/link";
 
 export default function Home() {
   const { data: session, update: updateSession } = useSession();
@@ -451,6 +452,30 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Premium Footer with Compliance Links */}
+      <footer className="mt-20 border-t border-slate-200 bg-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-2 opacity-50">
+              <Sparkles className="w-4 h-4 text-slate-400" />
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                © 2026 SocialAutoPyme - Panel de Control Pro
+              </span>
+            </div>
+
+            <div className="flex items-center gap-8">
+              <Link href="/privacy" className="text-sm font-semibold text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4" />
+                Política de Privacidad
+              </Link>
+              <Link href="/data-deletion" className="text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors">
+                Eliminación de Datos
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }

@@ -54,6 +54,22 @@ Una vez aceptada la invitación, envíale estos pasos al cliente:
 
 ---
 
+## 🛠️ Configuración de URLs (Para el Desarrollador)
+Si ves errores de "Redirect URI mismatch" o "Dominio no incluido", asegúrate de tener configuradas estas URLs exactas en tus consolas de desarrollador:
+
+### 1. LinkedIn Developer Portal
+* **Redirect URI:** `https://social-auto-pyme-v1.vercel.app/api/auth/callback/linkedin`
+
+### 2. Facebook Developers Console
+* **App Domains:** `social-auto-pyme-v1.vercel.app`
+* **Valid OAuth Redirect URIs:** `https://social-auto-pyme-v1.vercel.app/api/auth/link-instagram`
+* **Sitio Web (Platform):** `https://social-auto-pyme-v1.vercel.app`
+
+### 3. TikTok for Developers
+* **Redirect URI:** `https://social-auto-pyme-v1.vercel.app/api/auth/link-tiktok`
+
+---
+
 ### 💡 Tips para que la Demo sea Exitosa:
 - **Instagram:** Asegúrate de que la cuenta de Instagram de tu cliente sea **Business (Comercial)** y esté vinculada a una **Página de Facebook** de la cual él sea administrador.
 - **Video:** Recomienda usar videos de menos de 10-15MB para que la subida sea instantánea durante la demo.
