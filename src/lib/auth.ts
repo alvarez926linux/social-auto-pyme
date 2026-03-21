@@ -11,11 +11,13 @@ export const authOptions: NextAuthOptions = {
         LinkedInProvider({
             clientId: process.env.LINKEDIN_CLIENT_ID!,
             clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
+            client: { token_endpoint_auth_method: 'client_secret_post' },
             authorization: {
                 params: { scope: "openid profile email w_member_social" },
             },
             issuer: "https://www.linkedin.com/oauth",
             jwks_endpoint: "https://www.linkedin.com/oauth/openid/jwks",
+            wellKnown: "https://www.linkedin.com/oauth/.well-known/openid-configuration",
             profile(profile) {
                 return {
                     id: profile.sub,
