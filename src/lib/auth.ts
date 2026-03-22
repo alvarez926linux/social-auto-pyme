@@ -18,6 +18,7 @@ export const authOptions: NextAuthOptions = {
             issuer: "https://www.linkedin.com/oauth",
             jwks_endpoint: "https://www.linkedin.com/oauth/openid/jwks",
             wellKnown: "https://www.linkedin.com/oauth/.well-known/openid-configuration",
+            checks: ['none'], // Evitar error de cookie 'State cookie was missing'
             profile(profile) {
                 return {
                     id: profile.sub,
